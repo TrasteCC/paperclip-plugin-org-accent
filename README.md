@@ -1,60 +1,125 @@
-# Org Accent
-
-I built this plugin because I was tired of opening tasks in the wrong
-organization. It happened mostly on my phone, or when I was in a hurry. With
-this small change my mind links each organization to a color, and it doesn't
-happen anymore. I'd love to hear your feedback!
-
-A [Paperclip](https://github.com/paperclipai/paperclip) plugin that gives each
-company its own accent color. If you run several companies in one Paperclip
-instance, the color tells you which one you are in before you read a single
-label, much like a per-workspace color in a code editor.
-
-For the selected company, the plugin can draw:
-
-- a 3px line across the top of the sidebar, with a light tint on the page header,
-- a 3px line down the right edge of the sidebar,
-- a tint on the selected sidebar item,
-- a faint tint on the page background, in light and dark mode,
-- on phones, a top line and tint on the bottom navigation bar, with the active
-  item in the accent color.
-
-Nothing moves. Lines are inset shadows and tints are background colors, so the
-layout stays exactly where Paperclip put it. A company without a color looks
-like stock Paperclip.
-
-![Desktop dashboard of a company using the Green preset: green line along the top and right edge of the sidebar, tinted header and background](docs/desktop.webp)
-
 <p align="center">
-  <img src="docs/mobile.webp" width="320" alt="Mobile dashboard using the Sky preset: blue line and tint on the bottom navigation, Home drawn in the accent color">
+  <img src="docs/desktop.webp" alt="Paperclip dashboard of a company using the Green preset: green line along the top and right edge of the sidebar, tinted header and background" width="760" />
 </p>
 
-## Install
+<p align="center">
+  <a href="#-install"><strong>Install</strong></a> &middot;
+  <a href="#-how-to-use-it"><strong>How to use it</strong></a> &middot;
+  <a href="https://www.npmjs.com/package/paperclip-plugin-org-accent"><strong>npm</strong></a> &middot;
+  <a href="https://github.com/paperclipai/paperclip"><strong>Paperclip</strong></a>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/paperclip-plugin-org-accent"><img src="https://img.shields.io/npm/v/paperclip-plugin-org-accent?color=00aaff" alt="npm version" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" /></a>
+  <a href="https://github.com/paperclipai/paperclip"><img src="https://img.shields.io/badge/Paperclip-%E2%89%A5%202026.1012.0-3b6d11" alt="Paperclip 2026.1012.0 or later" /></a>
+  <img src="https://img.shields.io/badge/layout%20shift-0px-ba7517" alt="Zero layout shift" />
+</p>
+
+<br/>
+
+# 🎨 Org Accent: one color per company in Paperclip
+
+**Know which company you're in before you read a single word.**
+
+> I built this plugin because I was tired of opening tasks in the wrong
+> organization. It happened mostly on my phone, or when I was in a hurry. With
+> this small change my mind links each organization to a color, and it doesn't
+> happen anymore. I'd love to hear your feedback!
+
+A [Paperclip](https://github.com/paperclipai/paperclip) plugin that gives each
+company its own accent color, much like a per-workspace color in a code
+editor. Pick a swatch, and the sidebar, header, background and mobile
+navigation take that color for that company only.
+
+<p align="center">
+  <img src="https://img.shields.io/badge/-Amber-BA7517?style=for-the-badge" alt="Amber" />
+  <img src="https://img.shields.io/badge/-Green-3B6D11?style=for-the-badge" alt="Green" />
+  <img src="https://img.shields.io/badge/-Sky-00AAFF?style=for-the-badge" alt="Sky" />
+  <img src="https://img.shields.io/badge/-Blue-185FA5?style=for-the-badge" alt="Blue" />
+  <img src="https://img.shields.io/badge/-Violet-534AB7?style=for-the-badge" alt="Violet" />
+  <img src="https://img.shields.io/badge/-Teal-0F6E56?style=for-the-badge" alt="Teal" />
+  <img src="https://img.shields.io/badge/-Coral-D85A30?style=for-the-badge" alt="Coral" />
+  <img src="https://img.shields.io/badge/-Slate-5F5E5A?style=for-the-badge" alt="Slate" />
+</p>
+
+<br/>
+
+## Org Accent is right for you if
+
+- ✅ You run **several companies** in one Paperclip instance
+- ✅ You've **created a task in the wrong company** at least once
+- ✅ You manage Paperclip **from your phone** and the labels are tiny
+- ✅ You want the color **without Paperclip's layout moving a single pixel**
+
+<br/>
+
+## Features
+
+<table>
+<tr>
+<td align="center" width="33%">
+<h3>🖍️ One-click presets</h3>
+Eight tuned colors with readable text. Click a swatch, see it live, save.
+</td>
+<td align="center" width="33%">
+<h3>🎛️ Custom colors</h3>
+Any hex color, your own text color, tint sliders and a toggle for each accent.
+</td>
+<td align="center" width="33%">
+<h3>📱 Mobile too</h3>
+The bottom navigation gets a colored line, a tint and an accented active item.
+</td>
+</tr>
+<tr>
+<td align="center">
+<h3>🌗 Light and dark</h3>
+Tints are mixed into Paperclip's own surfaces, so both themes stay readable.
+</td>
+<td align="center">
+<h3>📐 Zero layout shift</h3>
+Lines are inset shadows and tints are backgrounds. Nothing moves.
+</td>
+<td align="center">
+<h3>🔒 Safe by design</h3>
+Every value is validated on both sides, so stored settings can't inject CSS.
+</td>
+</tr>
+</table>
+
+<p align="center">
+  <img src="docs/mobile.webp" width="300" alt="Mobile dashboard using the Sky preset: blue line and tint on the bottom navigation, Home drawn in the accent color">
+</p>
+
+<br/>
+
+## 📦 Install
 
 Org Accent needs Paperclip 2026.1012.0 or later, which has the
-`appShellOverlay` and `companySettingsPage` plugin slots. It is not on npm yet,
-so build it from source:
+`appShellOverlay` and `companySettingsPage` plugin slots.
+
+**From npm** (recommended):
+
+```bash
+paperclipai plugin install paperclip-plugin-org-accent
+```
+
+**From source:**
 
 ```bash
 git clone https://github.com/TrasteCC/paperclip-plugin-org-accent.git
 cd paperclip-plugin-org-accent
 pnpm install
 pnpm build
-```
-
-The installable package is `package.json` plus the `dist/` folder. The worker
-bundles its own copy of the SDK and the UI uses the host's React, so
-`node_modules/` is not needed at runtime. Copy those two to the Paperclip host
-and install from that folder:
-
-```bash
 paperclipai plugin install /path/to/paperclip-plugin-org-accent
 ```
 
-The plugin asks for four capabilities: `ui.action.register`,
-`instance.settings.register`, `plugin.state.read` and `plugin.state.write`.
+The installable package is `package.json` plus `dist/`; `node_modules/` is not
+needed at runtime. The plugin asks for four capabilities:
+`ui.action.register`, `instance.settings.register`, `plugin.state.read` and
+`plugin.state.write`.
 
-## How to use it
+## 🚀 How to use it
 
 1. Switch to the company you want to color.
 2. Open Settings and click Accent color in the left menu. The same page is
@@ -75,7 +140,7 @@ color, set how strong the tints are and turn each accent on or off.
 A company with nothing saved opens on Default colors. Remove tint brings a
 company back to stock Paperclip.
 
-### Default colors
+### 🖍️ Default colors
 
 Eight swatches, one click each. The sliders and toggles stay hidden and every
 option uses its default.
@@ -94,7 +159,7 @@ option uses its default.
 The plugin saves the preset's name, not its colors, so if a later release
 retunes a preset, every company using it picks up the change.
 
-### Custom colors
+### 🎛️ Custom colors
 
 | Option | Values | Default |
 |---|---|---|
@@ -109,7 +174,7 @@ retunes a preset, every company using it picks up the change.
 A tint of 0 % leaves Paperclip's own background or highlight alone. Switching
 from Default to Custom starts you from the colors of the preset you had.
 
-## Stored settings
+## 🗄️ Stored settings
 
 Each company has one record in the plugin's state store (`ctx.state`, scope
 `company`, key `accent`):
@@ -147,7 +212,7 @@ To set a color without the UI, call the worker action `save-accent` with
 { "companyId": "<company-id>", "mode": "default", "preset": "teal" }
 ```
 
-## How it works
+## ⚙️ How it works
 
 The plugin fills three slots:
 
@@ -185,7 +250,7 @@ The rules sit outside any CSS layer, so they beat Tailwind v4's
 `@layer utilities` classes without `!important`. Popovers and dialogs render
 outside the shell and keep the stock theme.
 
-## Building from source
+## 🛠️ Building from source
 
 The toolchain matches Paperclip's plugin scaffold
 (`packages/plugins/create-paperclip-plugin`): esbuild with the SDK's
@@ -200,7 +265,7 @@ pnpm test
 pnpm build
 ```
 
-## Known limits
+## ⚠️ Known limits
 
 - The light and dark base surface colors are copied from upstream `index.css`.
   If Paperclip changes `--background`, update the two values in `src/accent.ts`.
@@ -213,6 +278,6 @@ pnpm build
 - Only the selected company is tinted. The company switcher, popovers and
   dialogs keep Paperclip's colors.
 
-## License
+## 📄 License
 
 MIT
