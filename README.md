@@ -1,5 +1,10 @@
 # Org Accent
 
+I built this plugin because I was tired of opening tasks in the wrong
+organization. It happened mostly on my phone, or when I was in a hurry. With
+this small change my mind links each organization to a color, and it doesn't
+happen anymore. I'd love to hear your feedback!
+
 A [Paperclip](https://github.com/paperclipai/paperclip) plugin that gives each
 company its own accent color. If you run several companies in one Paperclip
 instance, the color tells you which one you are in before you read a single
@@ -49,13 +54,26 @@ paperclipai plugin install /path/to/paperclip-plugin-org-accent
 The plugin asks for four capabilities: `ui.action.register`,
 `instance.settings.register`, `plugin.state.read` and `plugin.state.write`.
 
-## Choosing a color
+## How to use it
 
-Open Company Settings > Accent color. The same page is also under Company
-Settings > Plugins > Org Accent. It applies to the company you have selected,
-and only board users can change it.
+1. Switch to the company you want to color.
+2. Open Settings and click Accent color in the left menu. The same page is
+   also under Plugins > Org Accent.
+3. Click one of the eight swatches. The whole interface takes the color right
+   away, so you can try a few.
+4. Click Save. Cancel, or leaving the page, puts the previous color back.
 
-Pick a mode at the top. A company with nothing saved starts on Default colors.
+Repeat for each company. Only board users can change the color.
+
+![Accent color page in Default colors mode: eight swatches, Green selected](docs/settings-default.webp)
+
+If none of the presets suits you, choose Custom colors. You can then type any
+color, set how strong the tints are and turn each accent on or off.
+
+![Accent color page in Custom colors mode: color pickers, two tint sliders and three toggles](docs/settings-custom.webp)
+
+A company with nothing saved opens on Default colors. Remove tint brings a
+company back to stock Paperclip.
 
 ### Default colors
 
@@ -90,12 +108,6 @@ retunes a preset, every company using it picks up the change.
 
 A tint of 0 % leaves Paperclip's own background or highlight alone. Switching
 from Default to Custom starts you from the colors of the preset you had.
-
-### Preview, save and undo
-
-The page repaints as you edit, so you see each change on the real interface.
-Save keeps it. Cancel, or leaving the page without saving, puts the saved
-colors back. Remove tint deletes the company's settings.
 
 ## Stored settings
 
