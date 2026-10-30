@@ -1,16 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { createTestHarness } from "@paperclipai/plugin-sdk/testing";
-import type { Company } from "@paperclipai/shared";
 import { DEFAULTS } from "../src/accent.js";
 import manifest from "../src/manifest.js";
 import plugin, { type AccentData } from "../src/worker.js";
 
 const COMPANY = "company-1";
 const scope = { scopeKind: "company" as const, scopeId: COMPANY, stateKey: "accent" };
+const EMPTY = { mode: "custom", preset: null, accentColor: null, textColor: null, ...DEFAULTS };
 
 async function setup() {
   const harness = createTestHarness({ manifest });
-  harness.seed({ companies: [{ id: COMPANY, name: "Acme Corp", issuePrefix: "ACM" } as Company] });
   await plugin.definition.setup(harness.ctx);
   return harness;
 }
@@ -19,6 +18,7 @@ const asUser = { actor: { type: "user" as const, userId: "user-1" }, companyId: 
 
 describe("org-accent worker", () => {
   it("declares the capabilities its slots need", () => {
+    expect(manifest.version).toBe("0.3.0");
     expect(manifest.capabilities).toContain("ui.action.register");
     expect(manifest.capabilities).toContain("instance.settings.register");
     expect(manifest.ui?.slots?.map((s) => s.type)).toEqual(["appShellOverlay", "companySettingsPage"]);
@@ -26,23 +26,43 @@ describe("org-accent worker", () => {
 
   it("returns no accent and default settings before anything is saved", async () => {
     const harness = await setup();
-    const data = await harness.getData<AccentData>("accent", { companyId: COMPANY });
-    expect(data).toEqual({ accentColor: null, textColor: null, ...DEFAULTS, companyName: "Acme Corp" });
+    expect(await harness.getData<AccentData>("accent", { companyId: COMPANY })).toEqual(EMPTY);
   });
 
-  it("saves and loads every setting per company", async () => {
+  it("saves and loads custom settings per company", async () => {
     const harness = await setup();
-    await harness.performAction(
-      "save-accent",
-      { accentColor: "#C05621", textColor: "#FFFFFF", backgroundTint: 9, navTint: 30, showBand: false, showSidebarEdge: false },
-      asUser,
-    );
-    const expected = { accentColor: "#c05621", textColor: "#ffffff", backgroundTint: 9, navTint: 30, showBand: false, showSidebarEdge: false };
+    const input = {
+      mode: "custom",
+      preset: null,
+      accentColor: "#C05621",
+      textColor: "#FFFFFF",
+      backgroundTint: 9,
+      navTint: 30,
+      showBand: false,
+      showSidebarEdge: false,
+      showMobileNav: false,
+    };
+    await harness.performAction("save-accent", input, asUser);
+    const expected = { ...input, accentColor: "#c05621", textColor: "#ffffff" };
     expect(harness.getState(scope)).toEqual(expected);
-    const data = await harness.getData<AccentData>("accent", { companyId: COMPANY });
-    expect(data).toEqual({ ...expected, companyName: "Acme Corp" });
-    const other = await harness.getData<AccentData>("accent", { companyId: "company-2" });
-    expect(other.accentColor).toBeNull();
+    expect(await harness.getData<AccentData>("accent", { companyId: COMPANY })).toEqual(expected);
+    expect((await harness.getData<AccentData>("accent", { companyId: "company-2" })).accentColor).toBeNull();
+  });
+
+  it("saves a preset by name in default mode", async () => {
+    const harness = await setup();
+    await harness.performAction("save-accent", { mode: "default", preset: "sky" }, asUser);
+    expect(harness.getState(scope)).toEqual({ ...EMPTY, mode: "default", preset: "sky" });
+  });
+
+  it("rejects unknown presets and modes", async () => {
+    const harness = await setup();
+    await expect(harness.performAction("save-accent", { mode: "default", preset: "hotpink" }, asUser)).rejects.toThrow(/preset/);
+    await expect(harness.performAction("save-accent", { mode: "default" }, asUser)).rejects.toThrow(/preset/);
+    await expect(
+      harness.performAction("save-accent", { mode: "custom", preset: "__proto__", accentColor: "#C05621" }, asUser),
+    ).rejects.toThrow(/preset/);
+    await expect(harness.performAction("save-accent", { mode: "fancy", accentColor: "#C05621" }, asUser)).rejects.toThrow(/mode/);
   });
 
   it("clamps numbers and ignores junk before storing", async () => {
@@ -53,26 +73,29 @@ describe("org-accent worker", () => {
       asUser,
     );
     expect(harness.getState(scope)).toEqual({
+      ...EMPTY,
       accentColor: "#c05621",
-      textColor: null,
       backgroundTint: 20,
       navTint: 12,
-      showBand: true,
-      showSidebarEdge: true,
     });
   });
 
-  it("reads old records that only have the two colors", async () => {
+  it("reads v0.1/v0.2 records (no mode) as Custom with defaults", async () => {
     const harness = await setup();
-    await harness.ctx.state.set(scope, { accentColor: "#2F855A", textColor: "#FFFFFF" });
-    const data = await harness.getData<AccentData>("accent", { companyId: COMPANY });
-    expect(data).toEqual({ accentColor: "#2f855a", textColor: "#ffffff", ...DEFAULTS, companyName: "Acme Corp" });
+    await harness.ctx.state.set(scope, { accentColor: "#2F855A", textColor: "#FFFFFF", backgroundTint: 7, showBand: false });
+    expect(await harness.getData<AccentData>("accent", { companyId: COMPANY })).toEqual({
+      ...EMPTY,
+      accentColor: "#2f855a",
+      textColor: "#ffffff",
+      backgroundTint: 7,
+      showBand: false,
+    });
   });
 
   it("clears the record when saved without an accent", async () => {
     const harness = await setup();
-    await harness.performAction("save-accent", { accentColor: "#2F855A", textColor: "" }, asUser);
-    await harness.performAction("save-accent", { accentColor: "", textColor: "" }, asUser);
+    await harness.performAction("save-accent", { mode: "default", preset: "green" }, asUser);
+    await harness.performAction("save-accent", { mode: "custom", preset: null, accentColor: "", textColor: "" }, asUser);
     expect(harness.getState(scope)).toBeUndefined();
   });
 

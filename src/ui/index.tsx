@@ -6,6 +6,7 @@ import {
   type PluginWidgetProps,
 } from "@paperclipai/plugin-sdk/ui";
 import {
+  PRESETS,
   RANGES,
   applyAccent,
   createPreview,
@@ -13,7 +14,9 @@ import {
   readableTextColor,
   removeAccent,
   resolveConfig,
-  type ResolvedAccentConfig,
+  type AccentMode,
+  type AccentSettings,
+  type PresetName,
 } from "../accent.js";
 import type { AccentData } from "../worker.js";
 
@@ -27,7 +30,7 @@ export function AccentOverlay({ context }: PluginWidgetProps) {
   const { data } = useAccentData(context.companyId);
 
   useEffect(() => {
-    if (data) applyAccent(data, data.companyName);
+    if (data) applyAccent(data);
   }, [data]);
 
   useEffect(() => () => removeAccent(), []);
@@ -35,15 +38,28 @@ export function AccentOverlay({ context }: PluginWidgetProps) {
   return null;
 }
 
-type Draft = Omit<ResolvedAccentConfig, "accentColor" | "textColor"> & { accentColor: string; textColor: string };
+type Draft = Omit<AccentSettings, "accentColor" | "textColor"> & { accentColor: string; textColor: string };
 
-function toDraft(config: ResolvedAccentConfig): Draft {
-  return { ...config, accentColor: config.accentColor ?? "", textColor: config.textColor ?? "" };
+function toDraft(settings: AccentSettings): Draft {
+  return { ...settings, accentColor: settings.accentColor ?? "", textColor: settings.textColor ?? "" };
 }
 
 const fieldStyle = { display: "grid", gap: "6px", maxWidth: "360px" } as const;
-const rowStyle = { display: "flex", gap: "8px", alignItems: "center" } as const;
+const rowStyle = { display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" } as const;
 const errorStyle = { color: "var(--destructive)" } as const;
+
+function swatchStyle(color: string, selected: boolean) {
+  return {
+    width: "32px",
+    height: "32px",
+    borderRadius: "8px",
+    background: color,
+    border: "none",
+    cursor: "pointer",
+    outline: selected ? "2px solid var(--foreground)" : "none",
+    outlineOffset: "2px",
+  } as const;
+}
 
 export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) {
   const { data, loading, error, refresh } = useAccentData(context.companyId);
@@ -57,7 +73,7 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
   useEffect(() => {
     if (!data || preview.current) return;
     const initial = toDraft(resolveConfig(data));
-    preview.current = createPreview(data, data.companyName);
+    preview.current = createPreview(data);
     setSaved(initial);
     setDraft(initial);
   }, [data]);
@@ -65,8 +81,9 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
   // Leaving the page without saving repaints the saved values.
   useEffect(() => () => preview.current?.revert(), []);
 
-  const accentValid = draft ? draft.accentColor === "" || normalizeColor(draft.accentColor) !== null : true;
-  const textValid = draft ? draft.textColor === "" || normalizeColor(draft.textColor) !== null : true;
+  const custom = draft?.mode === "custom";
+  const accentValid = !custom || !draft || draft.accentColor === "" || normalizeColor(draft.accentColor) !== null;
+  const textValid = !custom || !draft || draft.textColor === "" || normalizeColor(draft.textColor) !== null;
 
   useEffect(() => {
     if (draft && accentValid && textValid) preview.current?.update(draft);
@@ -77,9 +94,21 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
   if (!draft || !saved) return null;
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+  const canSave = dirty && accentValid && textValid && (draft.mode === "custom" || draft.preset !== null);
   const previewAccent = normalizeColor(draft.accentColor);
   const previewText = normalizeColor(draft.textColor) ?? (previewAccent ? readableTextColor(previewAccent) : null);
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft({ ...draft, [key]: value });
+
+  function switchMode(mode: AccentMode) {
+    if (!draft) return;
+    const next = { ...draft, mode };
+    // Start Custom from the chosen preset's colors when no custom color exists yet.
+    if (mode === "custom" && !draft.accentColor && draft.preset) {
+      next.accentColor = PRESETS[draft.preset].accentColor;
+      next.textColor = PRESETS[draft.preset].textColor;
+    }
+    setDraft(next);
+  }
 
   async function persist(next: Draft) {
     setStatus("Saving…");
@@ -89,7 +118,7 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
       setSaved(toDraft(stored));
       setDraft(toDraft(stored));
       refresh();
-      setStatus(stored.accentColor ? "Saved." : "Tint removed.");
+      setStatus(stored.mode === "default" || stored.accentColor ? "Saved." : "Tint removed.");
     } catch (err) {
       setStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -100,68 +129,103 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
       <div>
         <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>Accent color</h2>
         <p style={{ margin: "4px 0 0", opacity: 0.7 }}>
-          Tints this company's top band, sidebar and background. Changes preview live; leave the accent empty for no tint.
+          Tints this company's top bar, sidebar, background and mobile navigation. Changes preview live.
         </p>
       </div>
 
-      <label style={fieldStyle}>
-        <span>Accent color</span>
-        <span style={rowStyle}>
-          <input type="color" value={previewAccent ?? "#000000"} onChange={(e) => set("accentColor", e.target.value)} />
-          <input type="text" value={draft.accentColor} placeholder="#3366cc" onChange={(e) => set("accentColor", e.target.value)} />
-        </span>
-        {!accentValid && <span style={errorStyle}>Use a hex color like #3366cc.</span>}
-      </label>
+      <div role="radiogroup" aria-label="Color mode" style={rowStyle}>
+        {(["default", "custom"] as const).map((mode) => (
+          <label key={mode} style={rowStyle}>
+            <input
+              type="radio"
+              name="org-accent-mode"
+              value={mode}
+              checked={draft.mode === mode}
+              onChange={() => switchMode(mode)}
+            />
+            <span>{mode === "default" ? "Default colors" : "Custom colors"}</span>
+          </label>
+        ))}
+      </div>
 
-      <label style={fieldStyle}>
-        <span>Text color on the band</span>
-        <span style={rowStyle}>
-          <input type="color" value={previewText ?? "#ffffff"} onChange={(e) => set("textColor", e.target.value)} />
-          <input type="text" value={draft.textColor} placeholder="automatic" onChange={(e) => set("textColor", e.target.value)} />
-        </span>
-        {!textValid && <span style={errorStyle}>Use a hex color like #ffffff, or leave empty for automatic.</span>}
-      </label>
+      {draft.mode === "default" ? (
+        <div role="group" aria-label="Default colors" style={rowStyle}>
+          {(Object.keys(PRESETS) as PresetName[]).map((name) => (
+            <button
+              key={name}
+              type="button"
+              title={PRESETS[name].label}
+              aria-label={PRESETS[name].label}
+              aria-pressed={draft.preset === name}
+              data-preset={name}
+              style={swatchStyle(PRESETS[name].accentColor, draft.preset === name)}
+              onClick={() => set("preset", name)}
+            />
+          ))}
+        </div>
+      ) : (
+        <>
+          <label style={fieldStyle}>
+            <span>Accent color</span>
+            <span style={rowStyle}>
+              <input type="color" value={previewAccent ?? "#000000"} onChange={(e) => set("accentColor", e.target.value)} />
+              <input type="text" value={draft.accentColor} placeholder="#3366cc" onChange={(e) => set("accentColor", e.target.value)} />
+            </span>
+            {!accentValid && <span style={errorStyle}>Use a hex color like #3366cc.</span>}
+          </label>
 
-      <label style={fieldStyle}>
-        <span>Background tint: {draft.backgroundTint}%</span>
-        <input
-          type="range"
-          min={RANGES.backgroundTint.min}
-          max={RANGES.backgroundTint.max}
-          step={1}
-          value={draft.backgroundTint}
-          onChange={(e) => set("backgroundTint", Number(e.target.value))}
-        />
-      </label>
+          <label style={fieldStyle}>
+            <span>Text color on the accent</span>
+            <span style={rowStyle}>
+              <input type="color" value={previewText ?? "#ffffff"} onChange={(e) => set("textColor", e.target.value)} />
+              <input type="text" value={draft.textColor} placeholder="automatic" onChange={(e) => set("textColor", e.target.value)} />
+            </span>
+            {!textValid && <span style={errorStyle}>Use a hex color like #ffffff, or leave empty for automatic.</span>}
+          </label>
 
-      <label style={fieldStyle}>
-        <span>Selected nav item tint: {draft.navTint}%</span>
-        <input
-          type="range"
-          min={RANGES.navTint.min}
-          max={RANGES.navTint.max}
-          step={1}
-          value={draft.navTint}
-          onChange={(e) => set("navTint", Number(e.target.value))}
-        />
-      </label>
+          <label style={fieldStyle}>
+            <span>Background tint: {draft.backgroundTint}%</span>
+            <input
+              type="range"
+              min={RANGES.backgroundTint.min}
+              max={RANGES.backgroundTint.max}
+              step={1}
+              value={draft.backgroundTint}
+              onChange={(e) => set("backgroundTint", Number(e.target.value))}
+            />
+          </label>
 
-      <label style={rowStyle}>
-        <input type="checkbox" checked={draft.showBand} onChange={(e) => set("showBand", e.target.checked)} />
-        <span>Show the top band with the company name</span>
-      </label>
+          <label style={fieldStyle}>
+            <span>Selected nav item tint: {draft.navTint}%</span>
+            <input
+              type="range"
+              min={RANGES.navTint.min}
+              max={RANGES.navTint.max}
+              step={1}
+              value={draft.navTint}
+              onChange={(e) => set("navTint", Number(e.target.value))}
+            />
+          </label>
 
-      <label style={rowStyle}>
-        <input type="checkbox" checked={draft.showSidebarEdge} onChange={(e) => set("showSidebarEdge", e.target.checked)} />
-        <span>Show the colored sidebar edge</span>
-      </label>
+          <label style={rowStyle}>
+            <input type="checkbox" checked={draft.showBand} onChange={(e) => set("showBand", e.target.checked)} />
+            <span>Accent the top bar</span>
+          </label>
+
+          <label style={rowStyle}>
+            <input type="checkbox" checked={draft.showSidebarEdge} onChange={(e) => set("showSidebarEdge", e.target.checked)} />
+            <span>Show the colored sidebar edge</span>
+          </label>
+
+          <label style={rowStyle}>
+            <input type="checkbox" checked={draft.showMobileNav} onChange={(e) => set("showMobileNav", e.target.checked)} />
+            <span>Accent the mobile bottom navigation</span>
+          </label>
+        </>
+      )}
 
       <div style={rowStyle}>
-        <button
-          type="button"
-          disabled={!dirty || !accentValid || !textValid}
-          onClick={() => void persist(draft)}
-        >
+        <button type="button" disabled={!canSave} onClick={() => void persist(draft)}>
           Save
         </button>
         <button
@@ -175,7 +239,10 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
         >
           Cancel
         </button>
-        <button type="button" onClick={() => void persist({ ...draft, accentColor: "", textColor: "" })}>
+        <button
+          type="button"
+          onClick={() => void persist({ ...draft, mode: "custom", preset: null, accentColor: "", textColor: "" })}
+        >
           Remove tint
         </button>
         {status && <span>{status}</span>}
