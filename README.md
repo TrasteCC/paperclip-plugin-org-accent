@@ -1,34 +1,66 @@
-# Org Accent — a Paperclip plugin
+# Org Accent
 
-Tints the whole [Paperclip](https://github.com/paperclipai/paperclip) UI in a
-per-company accent color, so you always know which company you are working in
-(like a per-workspace color in an editor).
+A [Paperclip](https://github.com/paperclipai/paperclip) plugin that gives each
+company its own accent color. If you run several companies in one Paperclip
+instance, the color tells you which one you are in before you read a single
+label, much like a per-workspace color in a code editor.
 
-For the selected company it can add:
+For the selected company, the plugin can draw:
 
-- a **top bar accent**: a 3px accent line along the top of the page header
-  (breadcrumb bar) and a light tint of its background,
-- a 3px accent **sidebar edge** on the primary sidebar,
-- a **selected nav item tint** (the active sidebar link mixed with the accent),
-- a **background tint** (the page surface mixed with the accent, in light and dark mode),
-- a **mobile bottom navigation accent** on narrow screens: a 3px accent top
-  edge, a light background tint and the active item in the accent color.
+- a 3px line across the top of the sidebar, with a light tint on the page header,
+- a 3px line down the right edge of the sidebar,
+- a tint on the selected sidebar item,
+- a faint tint on the page background, in light and dark mode,
+- on phones, a top line and tint on the bottom navigation bar, with the active
+  item in the accent color.
 
-None of these change the size or position of anything on the page: lines are
-inset shadows and tints are background colors. A company with no accent color
-set gets no tint at all.
+Nothing moves. Lines are inset shadows and tints are background colors, so the
+layout stays exactly where Paperclip put it. A company without a color looks
+like stock Paperclip.
 
-## Settings
+![Desktop dashboard of a company using the Green preset: green line along the top and right edge of the sidebar, tinted header and background](docs/desktop.webp)
 
-Each company has its own settings page under **Company Settings → Accent color**
-(route `/<company-prefix>/company/settings/accent-color`). At the top, board
-users choose a color mode.
+<p align="center">
+  <img src="docs/mobile.webp" width="320" alt="Mobile dashboard using the Sky preset: blue line and tint on the bottom navigation, Home drawn in the accent color">
+</p>
+
+## Install
+
+Org Accent needs Paperclip 2026.1012.0 or later, which has the
+`appShellOverlay` and `companySettingsPage` plugin slots. It is not on npm yet,
+so build it from source:
+
+```bash
+git clone https://github.com/TrasteCC/paperclip-plugin-org-accent.git
+cd paperclip-plugin-org-accent
+pnpm install
+pnpm build
+```
+
+The installable package is `package.json` plus the `dist/` folder. The worker
+bundles its own copy of the SDK and the UI uses the host's React, so
+`node_modules/` is not needed at runtime. Copy those two to the Paperclip host
+and install from that folder:
+
+```bash
+paperclipai plugin install /path/to/paperclip-plugin-org-accent
+```
+
+The plugin asks for four capabilities: `ui.action.register`,
+`instance.settings.register`, `plugin.state.read` and `plugin.state.write`.
+
+## Choosing a color
+
+Open Company Settings > Accent color. The same page is also under Company
+Settings > Plugins > Org Accent. It applies to the company you have selected,
+and only board users can change it.
+
+Pick a mode at the top. A company with nothing saved starts on Default colors.
 
 ### Default colors
 
-One click on one of eight swatches. Every slider and toggle is hidden; the
-company gets the defaults below (background tint 5 %, selected item 22 %, every
-accent on).
+Eight swatches, one click each. The sliders and toggles stay hidden and every
+option uses its default.
 
 | Preset | Accent | Text on accent |
 |---|---|---|
@@ -41,31 +73,34 @@ accent on).
 | Coral | `#D85A30` | `#FFFFFF` |
 | Slate | `#5F5E5A` | `#FFFFFF` |
 
-The preset is stored **by name**, so retuning a preset's colors in a later
-version updates every company that uses it.
+The plugin saves the preset's name, not its colors, so if a later release
+retunes a preset, every company using it picks up the change.
 
 ### Custom colors
 
-| Setting | Values | Default |
+| Option | Values | Default |
 |---|---|---|
-| Accent color | hex `#rgb` / `#rrggbb`; empty = no tint | empty |
-| Text color on the accent | hex; empty = automatic white or near-black, whichever contrasts better | automatic |
-| Background tint | 0–20 % (integer); 0 leaves the host background untouched | 5 |
-| Selected nav item tint | 0–40 % (integer); 0 leaves the host highlight untouched | 22 |
-| Accent the top bar | on / off | on |
-| Sidebar edge | on / off | on |
-| Accent the mobile bottom navigation | on / off | on |
+| Accent color | `#rgb` or `#rrggbb`; empty means no tint | empty |
+| Text color on the accent | hex; empty picks white or near-black, whichever reads better | automatic |
+| Background tint | 0 to 20 % | 5 % |
+| Selected nav item tint | 0 to 40 % | 22 % |
+| Accent the top bar (sidebar top line and header tint) | on or off | on |
+| Sidebar edge | on or off | on |
+| Accent the mobile bottom navigation | on or off | on |
 
-Switching from Default to Custom starts from the chosen preset's colors.
+A tint of 0 % leaves Paperclip's own background or highlight alone. Switching
+from Default to Custom starts you from the colors of the preset you had.
 
-### Saving and preview
+### Preview, save and undo
 
-Changes **preview live** on the page while you edit. **Save** stores them;
-**Cancel**, or leaving the page without saving, repaints the saved values.
-**Remove tint** clears the company's record.
+The page repaints as you edit, so you see each change on the real interface.
+Save keeps it. Cancel, or leaving the page without saving, puts the saved
+colors back. Remove tint deletes the company's settings.
 
-All settings live in one record per company, stored with the plugin state API
-(`ctx.state`, `scopeKind: "company"`, `stateKey: "accent"`):
+## Stored settings
+
+Each company has one record in the plugin's state store (`ctx.state`, scope
+`company`, key `accent`):
 
 ```json
 {
@@ -81,28 +116,70 @@ All settings live in one record per company, stored with the plugin state API
 }
 ```
 
-Custom values are kept in Default mode, so switching back restores them.
-`showBand` keeps its v0.2 name for compatibility; it now controls the top bar
-accent. Records written by older versions keep working: a record without
-`mode` loads as Custom, and missing fields take the defaults above.
+Custom values survive a switch to Default mode, so switching back restores
+them. `showBand` is a name left over from v0.2, when the plugin drew a band
+with the company name; it now controls the top bar accent. Older records still
+load: one without `mode` opens as Custom, and missing fields take their
+defaults.
 
-Both the settings page and the worker validate input: `mode` must be
+The settings page and the worker both validate every field. `mode` must be
 `default` or `custom`, `preset` must be one of the eight names, colors must be
-hex, percentages are rounded to integers and clamped to their range, and
-toggles must be booleans, so a stored value can never inject CSS. Agents cannot
-change the settings.
+hex, percentages are rounded and clamped to their range, and toggles must be
+booleans. A stored value therefore cannot inject CSS. Agents cannot change the
+settings.
 
-Settings can also be written without the UI, through the worker action
-`save-accent` with `companyId` plus the fields above, for example
-`{ "companyId": "<company-id>", "mode": "default", "preset": "teal" }`.
+To set a color without the UI, call the worker action `save-accent` with
+`companyId` and any of the fields above:
 
-## Build and test
+```json
+{ "companyId": "<company-id>", "mode": "default", "preset": "teal" }
+```
 
-Requires Node.js and pnpm. Uses the same toolchain as Paperclip's plugin
-scaffold (`packages/plugins/create-paperclip-plugin`): esbuild with the SDK's
-`createPluginBundlerPresets`, vitest and tsc. `@paperclipai/plugin-sdk` and
-`@paperclipai/shared` are pinned to `2026.1012.0`; bump them to match the
-Paperclip version you run.
+## How it works
+
+The plugin fills three slots:
+
+- `appShellOverlay` (`AccentOverlay`). Paperclip mounts it once per selected
+  company and disposes it when you switch. It reads the company's settings,
+  writes one `<style id="paperclip-org-accent-style">` into `<head>` and sets
+  `data-org-accent` on `<html>`. On unmount it removes both. It renders nothing
+  visible.
+- `companySettingsPage` (route `accent-color`) and `settingsPage`, both showing
+  `AccentSettingsPage`. The live preview rewrites the same style element.
+
+### Selectors
+
+The SDK has no theming API, so the plugin styles Paperclip's page directly.
+The selectors come from Paperclip 2026.1012.0 (commit
+`bba6a45f0d364cfd962ac59b3bdf2426a8222adb`). They match on structure and ARIA
+attributes rather than class names, so they also fit upstream
+`8035f8b245fddeda5857a2248688eaac7c6051e6`, which adds the classes
+`.paperclip-app-shell`, `.app-main-row` and `.app-breadcrumb`. The tests run
+them against both versions, each with the default (`Layout.production.tsx`) and
+the streamlined (`Layout.tsx`) shell.
+
+| Selector or variable | What it styles | Upstream source |
+|---|---|---|
+| `div:has(> a[href="#main-content"])` (shell) | The app shell root, the only element whose direct child is the "Skip to Main Content" link. It holds `--org-accent`, `--org-accent-text` and the tinted `--background`. | `ui/src/components/Layout.production.tsx`, `ui/src/components/Layout.tsx` |
+| `--background`, light base `oklch(1 0 0)` | The page surface, mixed with the background tint. | `ui/src/index.css` `:root` |
+| `.dark` shell `--background`, dark base `oklch(0.205 0 0)` | The dark-mode surface. The `dark` class sits on `<html>`. | `ui/src/index.css` `.dark`, `ui/src/context/ThemeContext.tsx` |
+| shell ` div:first-child:not(:has(aside)):has(+ div main#main-content)` (top bar) | The header that wraps the breadcrumb: the first child of the content column, right before the row that holds `<main>`. The sidebar column also precedes that row, so anything containing an `<aside>` is excluded. Gets a 10 % accent background. | `ui/src/components/Layout.production.tsx`, `ui/src/components/Layout.tsx`, `ui/src/components/BreadcrumbBar*.tsx` |
+| shell ` aside:has(> nav)` | The primary sidebar. Gets `inset 0 3px 0` along the top and `inset -3px 0 0` on the right edge, each behind its own toggle. The plugin overlay's `<aside>` has no `<nav>` and is not matched. | `ui/src/components/Sidebar.production.tsx`, `ui/src/components/Sidebar.tsx` |
+| sidebar ` nav a.bg-accent`, ` nav a.bg-sidebar-accent`, ` nav a[aria-current="page"]` | The selected item: the default shell's class, the streamlined shell's class and the router's ARIA attribute. | `ui/src/components/SidebarNavItem.production.tsx`, `ui/src/components/SidebarNavItem.tsx` |
+| `nav[aria-label="Mobile navigation"]` | The bottom bar shown below the `md` breakpoint. Gets `inset 0 3px 0` along the top and a 12 % accent mixed into `--muted`. | `ui/src/components/MobileBottomNav.tsx` |
+| `nav[aria-label="Mobile navigation"] a[aria-current="page"]` | The active bottom bar item, drawn in the accent color. | `ui/src/components/MobileBottomNav.tsx` |
+
+The rules sit outside any CSS layer, so they beat Tailwind v4's
+`@layer utilities` classes without `!important`. Popovers and dialogs render
+outside the shell and keep the stock theme.
+
+## Building from source
+
+The toolchain matches Paperclip's plugin scaffold
+(`packages/plugins/create-paperclip-plugin`): esbuild with the SDK's
+`createPluginBundlerPresets`, Vitest and TypeScript. `@paperclipai/plugin-sdk`
+and `@paperclipai/shared` are pinned to `2026.1012.0`; change the pin to match
+the Paperclip you run.
 
 ```bash
 pnpm install
@@ -111,77 +188,18 @@ pnpm test
 pnpm build
 ```
 
-## Install
-
-After `pnpm build`, the plugin package is this folder: `package.json` (its
-`paperclipPlugin` block points at the built files) plus `dist/`:
-
-- `dist/manifest.js`
-- `dist/worker.js` (self-contained; the SDK is bundled in)
-- `dist/ui/index.js` (React and the SDK UI module come from the host)
-
-`node_modules/` is not needed at runtime. Copy `package.json` and `dist/` to
-the Paperclip host and install from that folder:
-
-```bash
-paperclipai plugin install /path/to/paperclip-plugin-org-accent
-```
-
-Requires a Paperclip version with the `appShellOverlay` and
-`companySettingsPage` slots (2026.1012.0 or later). Capabilities requested:
-`ui.action.register`, `instance.settings.register`, `plugin.state.read`,
-`plugin.state.write`. (v0.2 also asked for `companies.read` to print the
-company name in a band; v0.3 no longer needs it.)
-
-## How it works
-
-- **`appShellOverlay` slot** (`AccentOverlay`): the host mounts it once per
-  selected company and disposes it when the company changes. It loads the
-  company's settings and writes one `<style id="paperclip-org-accent-style">`
-  into `<head>` plus a `data-org-accent` attribute on `<html>`. On unmount it
-  removes both. It renders nothing visible.
-- **`companySettingsPage` slot** (`AccentSettingsPage`, route `accent-color`):
-  the settings form described above. Live preview repaints the same style
-  element; revert repaints the last saved values.
-
-## Host selectors and variables it overrides
-
-The SDK has no theming API, so the plugin styles the host page directly.
-Selectors were derived from Paperclip `2026.1012.0` (commit
-`bba6a45f0d364cfd962ac59b3bdf2426a8222adb`). They are structural/ARIA so they
-also match upstream `8035f8b245fddeda5857a2248688eaac7c6051e6`, where the
-shell gains `.paperclip-app-shell` / `.app-main-row` / `.app-breadcrumb`
-classes. Tests cover both versions with both app shells (the default
-`Layout.production.tsx` and the streamlined `Layout.tsx`).
-
-| Selector / variable | What it does | Upstream source |
-|---|---|---|
-| `div:has(> a[href="#main-content"])` (shell) | the app shell root, the only element whose direct child is the "Skip to Main Content" link; holds `--org-accent`, `--org-accent-text` and the tinted `--background` | `ui/src/components/Layout.production.tsx`, `ui/src/components/Layout.tsx` |
-| `--background` (light base `oklch(1 0 0)`) | page surface, mixed with the background tint | `ui/src/index.css` `:root` |
-| `.dark` shell → `--background` (dark base `oklch(0.205 0 0)`) | dark-mode surface, mixed with the background tint | `ui/src/index.css` `.dark` (class on `<html>`, `ui/src/context/ThemeContext.tsx`) |
-| shell ` div:first-child:not(:has(aside)):has(+ div main#main-content)` (top bar) | the breadcrumb wrapper: first child of the content column, directly followed by the row that holds `<main>`; the sidebar column is excluded because it contains an `<aside>`. Gets `box-shadow: inset 0 3px 0` accent and a 10 % accent background | `ui/src/components/Layout.production.tsx`, `ui/src/components/Layout.tsx` (wrapper around `BreadcrumbBar`, `ui/src/components/BreadcrumbBar*.tsx`) |
-| shell ` aside:has(> nav)` | primary sidebar `<aside>`: `box-shadow: inset -3px 0 0` accent (the plugin overlay `<aside>` has no `<nav>`, so it is not matched) | `ui/src/components/Sidebar.production.tsx`, `ui/src/components/Sidebar.tsx` |
-| `… nav a.bg-accent`, `… nav a.bg-sidebar-accent`, `… nav a[aria-current="page"]` | selected nav item (production class / streamlined class / NavLink ARIA), mixed with the nav tint | `ui/src/components/SidebarNavItem.production.tsx`, `ui/src/components/SidebarNavItem.tsx` |
-| `nav[aria-label="Mobile navigation"]` | mobile bottom navigation (shown below the `md` breakpoint): `box-shadow: inset 0 3px 0` accent and a 12 % accent mix into `--muted` | `ui/src/components/MobileBottomNav.tsx` |
-| `nav[aria-label="Mobile navigation"] a[aria-current="page"]` | active mobile nav item, text and icon in the accent color | same |
-
-The styles are unlayered, so they win over Tailwind v4's `@layer utilities`
-classes without `!important`. Popovers and dialogs render outside the shell and
-keep the stock theme on purpose.
-
 ## Known limits
 
-- The light/dark base surface colors are copied from upstream `index.css`. If
-  upstream changes `--background`, update the two literals in `src/accent.ts`.
-- With the streamlined UI enabled, the primary sidebar uses its own surface
-  class instead of `bg-background`, so its background may not pick up the tint
-  (the sidebar edge and the selected item still do). On the streamlined
-  task-detail view the breadcrumb moves next to `<main>` and the top bar
-  accent does not apply there.
-- The mobile nav's "New Task" entry is a button, not a link, so it never shows
-  the active accent.
+- The light and dark base surface colors are copied from upstream `index.css`.
+  If Paperclip changes `--background`, update the two values in `src/accent.ts`.
+- In the streamlined UI the sidebar paints its own surface, so its background
+  may stay untinted while the lines and the selected item still change. On the
+  streamlined task view the breadcrumb moves next to `<main>`, where the header
+  tint does not reach.
+- The New Task entry in the mobile bar is a button rather than a link, so it
+  never shows as active.
 - Only the selected company is tinted. The company switcher, popovers and
-  dialogs are not colored.
+  dialogs keep Paperclip's colors.
 
 ## License
 

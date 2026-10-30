@@ -44,6 +44,12 @@ function toDraft(settings: AccentSettings): Draft {
   return { ...settings, accentColor: settings.accentColor ?? "", textColor: settings.textColor ?? "" };
 }
 
+/** A company with nothing saved opens on Default colors; saved records keep their mode. */
+export function initialDraft(settings: AccentSettings): Draft {
+  const draft = toDraft(settings);
+  return settings.accentColor || settings.preset ? draft : { ...draft, mode: "default" };
+}
+
 const fieldStyle = { display: "grid", gap: "6px", maxWidth: "360px" } as const;
 const rowStyle = { display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" } as const;
 const errorStyle = { color: "var(--destructive)" } as const;
@@ -72,7 +78,7 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
   // First load only: later refreshes must not clobber an in-progress edit.
   useEffect(() => {
     if (!data || preview.current) return;
-    const initial = toDraft(resolveConfig(data));
+    const initial = initialDraft(resolveConfig(data));
     preview.current = createPreview(data);
     setSaved(initial);
     setDraft(initial);

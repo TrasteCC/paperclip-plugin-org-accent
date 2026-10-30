@@ -31,7 +31,7 @@ describe("applyAccent / removeAccent", () => {
     expect(document.querySelectorAll(`#${STYLE_ELEMENT_ID}`)).toHaveLength(1);
     expect(css()).toContain("--org-accent: #c05621");
     expect(css()).toContain("--org-accent-text: #ffffff");
-    expect(css()).toContain(`${SIDEBAR_SELECTOR} {\n  box-shadow: inset -3px 0 0 var(--org-accent)`);
+    expect(css()).toContain(`${SIDEBAR_SELECTOR} {\n  box-shadow: inset 0 3px 0 var(--org-accent), inset -3px 0 0 var(--org-accent);`);
     expect(css()).toContain("color-mix(in srgb, var(--org-accent) 5%, oklch(1 0 0))");
     expect(css()).toContain("color-mix(in srgb, var(--org-accent) 22%, transparent)");
     expect(css()).toContain(`.dark ${SHELL_SELECTOR}`);
@@ -40,7 +40,7 @@ describe("applyAccent / removeAccent", () => {
 
   it("accents the top bar and mobile nav without changing layout", () => {
     applyAccent({ accentColor: "#C05621", textColor: null });
-    expect(css()).toContain(`${HEADER_SELECTOR} {\n  background-color: color-mix(in srgb, var(--org-accent) 10%, var(--background));\n  box-shadow: inset 0 3px 0 var(--org-accent);`);
+    expect(css()).toContain(`${HEADER_SELECTOR} {\n  background-color: color-mix(in srgb, var(--org-accent) 10%, var(--background));\n}`);
     expect(css()).toContain(`${MOBILE_NAV_SELECTOR} {\n  background-color: color-mix(in srgb, var(--org-accent) 12%, var(--muted));\n  box-shadow: inset 0 3px 0 var(--org-accent);`);
     expect(css()).toContain(`${MOBILE_NAV_SELECTOR} a[aria-current="page"] {\n  color: var(--org-accent);`);
     // No band, no pseudo-element content, nothing that sizes or moves elements.
@@ -99,6 +99,15 @@ describe("custom appearance settings", () => {
     expect(css()).not.toContain("inset -3px");
     expect(css()).not.toContain(MOBILE_NAV_SELECTOR);
     expect(css()).toContain("--org-accent: #3182ce");
+  });
+
+  it("draws the top line on the sidebar only, independent of the sidebar edge", () => {
+    applyAccent({ accentColor: "#3182CE", showSidebarEdge: false });
+    expect(css()).toContain(`${SIDEBAR_SELECTOR} {\n  box-shadow: inset 0 3px 0 var(--org-accent);\n}`);
+    expect(css()).not.toMatch(new RegExp(`${HEADER_SELECTOR.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} \\{[^}]*box-shadow`));
+    applyAccent({ accentColor: "#3182CE", showBand: false });
+    expect(css()).toContain(`${SIDEBAR_SELECTOR} {\n  box-shadow: inset -3px 0 0 var(--org-accent);\n}`);
+    expect(css()).not.toContain(HEADER_SELECTOR);
   });
 
   it("leaves host defaults alone at 0%", () => {

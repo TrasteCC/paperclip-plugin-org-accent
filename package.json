@@ -1,6 +1,6 @@
 {
   "name": "paperclip-plugin-org-accent",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "type": "module",
   "private": true,
   "description": "Tints the whole Paperclip UI in a per-company accent color",

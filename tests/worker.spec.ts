@@ -18,10 +18,12 @@ const asUser = { actor: { type: "user" as const, userId: "user-1" }, companyId: 
 
 describe("org-accent worker", () => {
   it("declares the capabilities its slots need", () => {
-    expect(manifest.version).toBe("0.3.0");
+    expect(manifest.version).toBe("0.3.2");
     expect(manifest.capabilities).toContain("ui.action.register");
     expect(manifest.capabilities).toContain("instance.settings.register");
-    expect(manifest.ui?.slots?.map((s) => s.type)).toEqual(["appShellOverlay", "companySettingsPage"]);
+    expect(manifest.ui?.slots?.map((s) => s.type)).toEqual(["appShellOverlay", "companySettingsPage", "settingsPage"]);
+    const pages = manifest.ui?.slots?.filter((s) => s.type !== "appShellOverlay").map((s) => s.exportName);
+    expect(pages).toEqual(["AccentSettingsPage", "AccentSettingsPage"]);
   });
 
   it("returns no accent and default settings before anything is saved", async () => {

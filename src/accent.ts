@@ -152,13 +152,17 @@ ${shell} {
     rules.push(`
 ${HEADER_SELECTOR} {
   background-color: color-mix(in srgb, var(--org-accent) ${HEADER_TINT}%, var(--background));
-  box-shadow: inset 0 3px 0 var(--org-accent);
 }`);
   }
-  if (appearance.showSidebarEdge) {
+  // The top accent line runs across the sidebar only, not over the page header.
+  const sidebarLines = [
+    appearance.showBand ? "inset 0 3px 0 var(--org-accent)" : null,
+    appearance.showSidebarEdge ? "inset -3px 0 0 var(--org-accent)" : null,
+  ].filter(Boolean);
+  if (sidebarLines.length > 0) {
     rules.push(`
 ${sidebar} {
-  box-shadow: inset -3px 0 0 var(--org-accent);
+  box-shadow: ${sidebarLines.join(", ")};
 }`);
   }
   if (appearance.navTint > 0) {

@@ -57,6 +57,18 @@ describe("settings page", () => {
     expect(q('input[type="color"]')).toHaveLength(0);
   });
 
+  it("a company with nothing saved opens on Default colors, with Save disabled until a swatch is picked", () => {
+    state.data = null;
+    render();
+    expect((q('input[value="default"]')[0] as HTMLInputElement).checked).toBe(true);
+    expect(q("button[data-preset]")).toHaveLength(8);
+    expect(q('button[aria-pressed="true"]')).toHaveLength(0);
+    expect(button("Save").disabled).toBe(true);
+    click(q('button[data-preset="blue"]')[0]);
+    expect(button("Save").disabled).toBe(false);
+    expect(css()).toContain("--org-accent: #185fa5");
+  });
+
   it("records without mode open in Custom with every control", () => {
     state.data = { accentColor: "#C05621", textColor: "#FFFFFF" };
     render();
