@@ -14,9 +14,6 @@ export const SIDEBAR_SELECTOR = `${SHELL_SELECTOR} aside:has(> nav)`;
 export const HEADER_SELECTOR = `${SHELL_SELECTOR} div:first-child:not(:has(aside)):has(+ div main#main-content)`;
 export const MOBILE_NAV_SELECTOR = 'nav[aria-label="Mobile navigation"]';
 
-/** Fixed tints for the top bar and mobile nav backgrounds (not user-tunable). */
-const HEADER_TINT = 10;
-const MOBILE_NAV_TINT = 12;
 
 export const PRESETS = {
   amber: { label: "Amber", accentColor: "#ba7517", textColor: "#ffffff" },
@@ -44,6 +41,8 @@ export type AccentSettings = {
   textColor: string | null;
   backgroundTint: number;
   navTint: number;
+  headerTint: number;
+  mobileNavTint: number;
   // Stored key kept from v0.2 (it drew a band then); now accents the top bar.
   showBand: boolean;
   showSidebarEdge: boolean;
@@ -59,6 +58,8 @@ export type Appearance = Omit<AccentSettings, "mode" | "preset">;
 export const DEFAULTS = {
   backgroundTint: 5,
   navTint: 22,
+  headerTint: 10,
+  mobileNavTint: 12,
   showBand: true,
   showSidebarEdge: true,
   showMobileNav: true,
@@ -67,6 +68,8 @@ export const DEFAULTS = {
 export const RANGES = {
   backgroundTint: { min: 0, max: 20 },
   navTint: { min: 0, max: 40 },
+  headerTint: { min: 0, max: 60 },
+  mobileNavTint: { min: 0, max: 60 },
 } as const;
 
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
@@ -99,6 +102,8 @@ export function resolveConfig(raw: RawAccentSettings): AccentSettings {
     textColor: normalizeColor(raw?.textColor),
     backgroundTint: clampPercent(raw?.backgroundTint, RANGES.backgroundTint, DEFAULTS.backgroundTint),
     navTint: clampPercent(raw?.navTint, RANGES.navTint, DEFAULTS.navTint),
+    headerTint: clampPercent(raw?.headerTint, RANGES.headerTint, DEFAULTS.headerTint),
+    mobileNavTint: clampPercent(raw?.mobileNavTint, RANGES.mobileNavTint, DEFAULTS.mobileNavTint),
     showBand: bool(raw?.showBand, DEFAULTS.showBand),
     showSidebarEdge: bool(raw?.showSidebarEdge, DEFAULTS.showSidebarEdge),
     showMobileNav: bool(raw?.showMobileNav, DEFAULTS.showMobileNav),
@@ -148,10 +153,10 @@ ${shell} {
   --background: color-mix(in srgb, var(--org-accent) ${appearance.backgroundTint}%, oklch(0.205 0 0));
 }`);
   }
-  if (appearance.showBand) {
+  if (appearance.showBand && appearance.headerTint > 0) {
     rules.push(`
 ${HEADER_SELECTOR} {
-  background-color: color-mix(in srgb, var(--org-accent) ${HEADER_TINT}%, var(--background));
+  background-color: color-mix(in srgb, var(--org-accent) ${appearance.headerTint}%, var(--background));
 }`);
   }
   // The top accent line runs across the sidebar only, not over the page header.
@@ -176,7 +181,7 @@ ${sidebar} nav a[aria-current="page"] {
   if (appearance.showMobileNav) {
     rules.push(`
 ${MOBILE_NAV_SELECTOR} {
-  background-color: color-mix(in srgb, var(--org-accent) ${MOBILE_NAV_TINT}%, var(--muted));
+  background-color: color-mix(in srgb, var(--org-accent) ${appearance.mobileNavTint}%, var(--muted));
   box-shadow: inset 0 3px 0 var(--org-accent);
 }
 ${MOBILE_NAV_SELECTOR} a[aria-current="page"] {

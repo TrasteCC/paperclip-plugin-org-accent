@@ -168,8 +168,10 @@ retunes a preset, every company using it picks up the change.
 | Background tint | 0 to 20 % | 5 % |
 | Selected nav item tint | 0 to 40 % | 22 % |
 | Accent the top bar (sidebar top line and header tint) | on or off | on |
+| Top bar intensity | 0 to 60 % | 10 % |
 | Sidebar edge | on or off | on |
 | Accent the mobile bottom navigation | on or off | on |
+| Mobile navigation intensity | 0 to 60 % | 12 % |
 
 A tint of 0 % leaves Paperclip's own background or highlight alone. Switching
 from Default to Custom starts you from the colors of the preset you had.
@@ -187,6 +189,8 @@ Each company has one record in the plugin's state store (`ctx.state`, scope
   "textColor": null,
   "backgroundTint": 5,
   "navTint": 22,
+  "headerTint": 10,
+  "mobileNavTint": 12,
   "showBand": true,
   "showSidebarEdge": true,
   "showMobileNav": true
@@ -240,10 +244,10 @@ the streamlined (`Layout.tsx`) shell.
 | `div:has(> a[href="#main-content"])` (shell) | The app shell root, the only element whose direct child is the "Skip to Main Content" link. It holds `--org-accent`, `--org-accent-text` and the tinted `--background`. | `ui/src/components/Layout.production.tsx`, `ui/src/components/Layout.tsx` |
 | `--background`, light base `oklch(1 0 0)` | The page surface, mixed with the background tint. | `ui/src/index.css` `:root` |
 | `.dark` shell `--background`, dark base `oklch(0.205 0 0)` | The dark-mode surface. The `dark` class sits on `<html>`. | `ui/src/index.css` `.dark`, `ui/src/context/ThemeContext.tsx` |
-| shell ` div:first-child:not(:has(aside)):has(+ div main#main-content)` (top bar) | The header that wraps the breadcrumb: the first child of the content column, right before the row that holds `<main>`. The sidebar column also precedes that row, so anything containing an `<aside>` is excluded. Gets a 10 % accent background. | `ui/src/components/Layout.production.tsx`, `ui/src/components/Layout.tsx`, `ui/src/components/BreadcrumbBar*.tsx` |
+| shell ` div:first-child:not(:has(aside)):has(+ div main#main-content)` (top bar) | The header that wraps the breadcrumb: the first child of the content column, right before the row that holds `<main>`. The sidebar column also precedes that row, so anything containing an `<aside>` is excluded. Gets the top bar intensity (default 10 %) as an accent background. | `ui/src/components/Layout.production.tsx`, `ui/src/components/Layout.tsx`, `ui/src/components/BreadcrumbBar*.tsx` |
 | shell ` aside:has(> nav)` | The primary sidebar. Gets `inset 0 3px 0` along the top and `inset -3px 0 0` on the right edge, each behind its own toggle. The plugin overlay's `<aside>` has no `<nav>` and is not matched. | `ui/src/components/Sidebar.production.tsx`, `ui/src/components/Sidebar.tsx` |
 | sidebar ` nav a.bg-accent`, ` nav a.bg-sidebar-accent`, ` nav a[aria-current="page"]` | The selected item: the default shell's class, the streamlined shell's class and the router's ARIA attribute. | `ui/src/components/SidebarNavItem.production.tsx`, `ui/src/components/SidebarNavItem.tsx` |
-| `nav[aria-label="Mobile navigation"]` | The bottom bar shown below the `md` breakpoint. Gets `inset 0 3px 0` along the top and a 12 % accent mixed into `--muted`. | `ui/src/components/MobileBottomNav.tsx` |
+| `nav[aria-label="Mobile navigation"]` | The bottom bar shown below the `md` breakpoint. Gets `inset 0 3px 0` along the top and the mobile navigation intensity (default 12 %) mixed into `--muted`. | `ui/src/components/MobileBottomNav.tsx` |
 | `nav[aria-label="Mobile navigation"] a[aria-current="page"]` | The active bottom bar item, drawn in the accent color. | `ui/src/components/MobileBottomNav.tsx` |
 
 The rules sit outside any CSS layer, so they beat Tailwind v4's

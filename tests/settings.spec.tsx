@@ -74,7 +74,7 @@ describe("settings page", () => {
     render();
     expect((q('input[value="custom"]')[0] as HTMLInputElement).checked).toBe(true);
     expect(q("button[data-preset]")).toHaveLength(0);
-    expect(q('input[type="range"]')).toHaveLength(2);
+    expect(q('input[type="range"]')).toHaveLength(4);
     expect(q('input[type="checkbox"]')).toHaveLength(3);
     expect(container.textContent).toContain("Accent the top bar");
     expect(container.textContent).toContain("Accent the mobile bottom navigation");
@@ -108,6 +108,6 @@ describe("settings page", () => {
     click(q('input[value="custom"]')[0]);
     const text = q('input[type="text"]')[0] as HTMLInputElement;
     expect(text.value).toBe("#d85a30");
-    expect(q('input[type="range"]')).toHaveLength(2);
+    expect(q('input[type="range"]')).toHaveLength(4);
   });
 });

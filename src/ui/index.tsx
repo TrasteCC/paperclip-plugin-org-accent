@@ -218,6 +218,20 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
             <span>Accent the top bar</span>
           </label>
 
+          {draft.showBand && (
+            <label style={fieldStyle}>
+              <span>Top bar intensity: {draft.headerTint}%</span>
+              <input
+                type="range"
+                min={RANGES.headerTint.min}
+                max={RANGES.headerTint.max}
+                step={1}
+                value={draft.headerTint}
+                onChange={(e) => set("headerTint", Number(e.target.value))}
+              />
+            </label>
+          )}
+
           <label style={rowStyle}>
             <input type="checkbox" checked={draft.showSidebarEdge} onChange={(e) => set("showSidebarEdge", e.target.checked)} />
             <span>Show the colored sidebar edge</span>
@@ -227,6 +241,20 @@ export function AccentSettingsPage({ context }: PluginCompanySettingsPageProps) 
             <input type="checkbox" checked={draft.showMobileNav} onChange={(e) => set("showMobileNav", e.target.checked)} />
             <span>Accent the mobile bottom navigation</span>
           </label>
+
+          {draft.showMobileNav && (
+            <label style={fieldStyle}>
+              <span>Mobile navigation intensity: {draft.mobileNavTint}%</span>
+              <input
+                type="range"
+                min={RANGES.mobileNavTint.min}
+                max={RANGES.mobileNavTint.max}
+                step={1}
+                value={draft.mobileNavTint}
+                onChange={(e) => set("mobileNavTint", Number(e.target.value))}
+              />
+            </label>
+          )}
         </>
       )}
 

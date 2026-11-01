@@ -18,7 +18,7 @@ const asUser = { actor: { type: "user" as const, userId: "user-1" }, companyId: 
 
 describe("org-accent worker", () => {
   it("declares the capabilities its slots need", () => {
-    expect(manifest.version).toBe("0.3.2");
+    expect(manifest.version).toBe("0.4.0");
     expect(manifest.capabilities).toContain("ui.action.register");
     expect(manifest.capabilities).toContain("instance.settings.register");
     expect(manifest.ui?.slots?.map((s) => s.type)).toEqual(["appShellOverlay", "companySettingsPage", "settingsPage"]);
@@ -40,6 +40,8 @@ describe("org-accent worker", () => {
       textColor: "#FFFFFF",
       backgroundTint: 9,
       navTint: 30,
+      headerTint: 35,
+      mobileNavTint: 40,
       showBand: false,
       showSidebarEdge: false,
       showMobileNav: false,

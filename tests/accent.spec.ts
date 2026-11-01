@@ -110,6 +110,21 @@ describe("custom appearance settings", () => {
     expect(css()).not.toContain(HEADER_SELECTOR);
   });
 
+  it("uses the stored top bar and mobile nav intensities, clamped to 60%", () => {
+    applyAccent({ accentColor: "#3182CE", headerTint: 45, mobileNavTint: 99 });
+    expect(css()).toContain("var(--org-accent) 45%, var(--background)");
+    expect(css()).toContain("var(--org-accent) 60%, var(--muted)");
+    applyAccent({ accentColor: "#3182CE" });
+    expect(css()).toContain("var(--org-accent) 10%, var(--background)");
+    expect(css()).toContain("var(--org-accent) 12%, var(--muted)");
+  });
+
+  it("keeps the sidebar top line but drops the header tint at 0% top bar intensity", () => {
+    applyAccent({ accentColor: "#3182CE", headerTint: 0 });
+    expect(css()).not.toContain(HEADER_SELECTOR);
+    expect(css()).toContain("inset 0 3px 0 var(--org-accent)");
+  });
+
   it("leaves host defaults alone at 0%", () => {
     applyAccent({ accentColor: "#3182CE", backgroundTint: 0, navTint: 0 });
     expect(css()).not.toContain("--background:");
