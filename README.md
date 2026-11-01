@@ -130,12 +130,12 @@ needed at runtime. The plugin asks for four capabilities:
 
 Repeat for each company. Only board users can change the color.
 
-![Accent color page in Default colors mode: eight swatches, Green selected](docs/settings-default.webp)
+![Accent color page in Default colors mode: a Default/Custom pill switch and eight round swatches, Violet selected](docs/settings-default.webp)
 
 If none of the presets suits you, choose Custom colors. You can then type any
 color, set how strong the tints are and turn each accent on or off.
 
-![Accent color page in Custom colors mode: color pickers, two tint sliders and three toggles](docs/settings-custom.webp)
+![Accent color page in Custom colors mode: Colors, Tint and Where to show it cards with color chips, sliders and switches](docs/settings-custom.webp)
 
 A company with nothing saved opens on Default colors. Remove tint brings a
 company back to stock Paperclip.
