@@ -18,7 +18,7 @@ const asUser = { actor: { type: "user" as const, userId: "user-1" }, companyId: 
 
 describe("org-accent worker", () => {
   it("declares the capabilities its slots need", () => {
-    expect(manifest.version).toBe("0.4.0");
+    expect(manifest.version).toBe("0.5.0");
     expect(manifest.capabilities).toContain("ui.action.register");
     expect(manifest.capabilities).toContain("instance.settings.register");
     expect(manifest.ui?.slots?.map((s) => s.type)).toEqual(["appShellOverlay", "companySettingsPage", "settingsPage"]);

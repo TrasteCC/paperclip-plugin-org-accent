@@ -3,7 +3,7 @@ import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
 const manifest: PaperclipPluginManifestV1 = {
   id: "traste.org-accent",
   apiVersion: 1,
-  version: "0.4.0",
+  version: "0.5.0",
   displayName: "Org Accent",
   description: "Tints the whole UI in a per-company accent color so organizations are easy to tell apart.",
   author: "traste",
